@@ -1,0 +1,61 @@
+{
+  "name": "octo",
+  "description": "Octo is a moderation and utilities Discord bot for Blue Shark River.",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "NODE_ENV=production pm2 start",
+    "dev": "nodemon",
+    "dev:node": "node .",
+    "test": "yarn build && yarn lint && yarn format:check",
+    "test:fix": "yarn build && yarn lint:fix && yarn format",
+    "build": "tsc",
+    "build:dev": "tsc --watch",
+    "prisma:push": "prisma db push",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GodderE2D/octo.git"
+  },
+  "author": "GodderE2D",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/GodderE2D/octo/issues"
+  },
+  "homepage": "https://bsr.gg/",
+  "type": "module",
+  "engines": {
+    "node": ">=16.9.0"
+  },
+  "prisma": {
+    "schema": "src/prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@prisma/client": "^4.14.1",
+    "@sapphire/framework": "^4.4.3",
+    "chalk": "^5.2.0",
+    "dayjs": "^1.11.7",
+    "discord.js": "14.11.0",
+    "dotenv": "^16.0.3",
+    "parse-duration": "^1.0.3",
+    "pm2": "^5.3.0",
+    "zod": "^3.21.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.2.1",
+    "@typescript-eslint/eslint-plugin": "^5.59.6",
+    "@typescript-eslint/parser": "^5.59.6",
+    "eslint": "^8.40.0",
+    "eslint-config-prettier": "^8.8.0",
+    "nodemon": "^2.0.22",
+    "prettier": "^2.8.8",
+    "prettier-plugin-prisma": "^4.13.0",
+    "prisma": "^4.14.1",
+    "typescript": "^5.0.4"
+  },
+  "packageManager": "yarn@1.22.19"
+}

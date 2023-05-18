@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_CONNECTION_URL")
+}
+
+model Member {
+  id            String @id @default(cuid())
+  userId        String @unique @map("user_id")
+  cases         Case[] @relation("cases")
+  authoredCases Case[] @relation("authoredCases")
+
+  @@map("member")
+}
+
+model Case {
+  id          String    @id @default(cuid())
+  number      Int       @unique @default(autoincrement())
+  type        CaseType
+  member      Member    @relation("cases", fields: [memberId], references: [id])
+  memberId    String    @map("member_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  processed   Boolean   @default(false)
+  processedAt DateTime? @map("processed_at")
+  duration    Int? // in seconds, -1 = never, null = N/A
+  reason      String
+  automod     Boolean
+  appealable  Boolean   @map("appealable")
+  dmSent      Boolean   @map("dm_sent")
+  moderator   Member?   @relation("authoredCases", fields: [moderatorId], references: [id])
+  moderatorId String    @map("moderator_id")
+
+  @@map("case")
+}
+
+enum CaseType {
+  Warn
+  Timeout
+  Kick
+  Softban
+  Ban
+  Restrict
+
+  @@map("case_type")
+}
