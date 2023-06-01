@@ -71,11 +71,17 @@ if (!parseInt(env.API_PORT)) {
   throw new Error("API_PORT environment variable must be a number.");
 }
 
-fastify.listen({ port: parseInt(env.API_PORT) }, (error, address) => {
-  if (error) {
-    logger.error("An error occurred when trying to initialise the API:", error);
-    process.exit(1);
-  }
+fastify.listen(
+  { port: parseInt(env.API_PORT), host: "0.0.0.0" },
+  (error, address) => {
+    if (error) {
+      logger.error(
+        "An error occurred when trying to initialise the API:",
+        error
+      );
+      process.exit(1);
+    }
 
-  logger.info(`API server listening at ${address}`);
-});
+    logger.info(`API server listening at ${address}`);
+  }
+);
