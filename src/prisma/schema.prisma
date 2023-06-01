@@ -8,30 +8,31 @@ datasource db {
 }
 
 model Member {
-  id            String @id @default(cuid())
-  userId        String @unique @map("user_id")
-  cases         Case[] @relation("cases")
-  authoredCases Case[] @relation("authoredCases")
+  userId              String            @id @map("user_id")
+  cases               Case[]            @relation("cases")
+  authoredCases       Case[]            @relation("authoredCases")
+  minecraft           MinecraftPlayer[] @relation("minecraftPlayer")
+  minecraftPlayerUuid String?
 
   @@map("member")
 }
 
 model Case {
-  id          String    @id @default(cuid())
-  number      Int       @unique @default(autoincrement())
-  type        CaseType
-  member      Member    @relation("cases", fields: [memberId], references: [id])
-  memberId    String    @map("member_id")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  processed   Boolean   @default(false)
-  processedAt DateTime? @map("processed_at")
-  duration    Int? // in seconds, -1 = never, null = N/A
-  reason      String
-  automod     Boolean
-  appealable  Boolean   @map("appealable")
-  dmSent      Boolean   @map("dm_sent")
-  moderator   Member?   @relation("authoredCases", fields: [moderatorId], references: [id])
-  moderatorId String    @map("moderator_id")
+  number          Int      @id @default(autoincrement())
+  type            CaseType
+  member          Member   @relation("cases", fields: [memberId], references: [userId])
+  memberId        String   @map("member_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  processed       Boolean? @default(false) // Whether the case's expiry has been processed (e.g. unban)
+  duration        Int? // in milliseconds, -1 = never, null = N/A
+  reason          String
+  dmSent          Boolean? @map("dm_sent")
+  logMessageLink  String?  @map("log_message_link")
+  reference       Case?    @relation("CaseReference", fields: [referenceNumber], references: [number])
+  referenceNumber Int?     @map("reference_id")
+  referredCases   Case[]   @relation("CaseReference")
+  moderator       Member?  @relation("authoredCases", fields: [moderatorId], references: [userId])
+  moderatorId     String   @map("moderator_id")
 
   @@map("case")
 }
@@ -39,10 +40,32 @@ model Case {
 enum CaseType {
   Warn
   Timeout
+  TimeoutEnd
   Kick
   Softban
   Ban
+  Unban
   Restrict
+  RestrictEnd
 
   @@map("case_type")
+}
+
+model MinecraftPlayer {
+  uuid                 String   @id
+  discord              Member?  @relation("minecraftPlayer", fields: [discordId], references: [userId])
+  discordId            String?  @map("discord_id")
+  createdAt            DateTime @default(now()) @map("created_at")
+  mainAccount          Boolean  @default(true) @map("main_account")
+  member               Boolean  @default(false)
+  verified             Boolean? @default(false)
+  verificationCode     Int?     @map("verification_code")
+  applicationChannelId String?  @map("application_channel_id")
+}
+
+model QueuedCommand {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  command   String
+  processed Boolean  @default(false)
 }

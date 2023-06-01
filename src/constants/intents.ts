@@ -1,15 +1,17 @@
-import { Intents } from "discord.js";
+import { IntentsBitField } from "discord.js";
 
-const intents = new Intents().add([
-  Intents.FLAGS.GUILDS,
-  Intents.FLAGS.GUILD_MEMBERS,
-  Intents.FLAGS.GUILD_BANS,
-  Intents.FLAGS.GUILD_MESSAGES,
-  Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
-  Intents.FLAGS.DIRECT_MESSAGES,
-  Intents.FLAGS.DIRECT_MESSAGE_REACTIONS,
+const intents = new IntentsBitField().add([
+  IntentsBitField.Flags.Guilds,
+  IntentsBitField.Flags.GuildMembers,
+  IntentsBitField.Flags.GuildModeration,
+  IntentsBitField.Flags.GuildMessages,
+  IntentsBitField.Flags.GuildMessageReactions,
+  IntentsBitField.Flags.GuildVoiceStates,
+  IntentsBitField.Flags.AutoModerationExecution,
+  IntentsBitField.Flags.AutoModerationConfiguration,
+  IntentsBitField.Flags.DirectMessages,
+  IntentsBitField.Flags.DirectMessageReactions,
+  IntentsBitField.Flags.MessageContent,
 ]);
-
-// TODO: Add GuildMessages & AutoModerationExecution to intents once released to discord-api-types
 
 export default intents;

@@ -1,7 +1,6 @@
 import { ChatInputCommand, Command } from "@sapphire/framework";
-import { Message, MessageEmbed } from "discord.js";
+import { EmbedBuilder } from "discord.js";
 import colours from "../../constants/colours.js";
-import { env } from "../../index.js";
 
 export class PingCommand extends Command {
   public constructor(context: Command.Context, options: Command.Options) {
@@ -22,15 +21,15 @@ export class PingCommand extends Command {
           .setName(this.name)
           .setDescription(this.description),
       {
-        guildIds: [env.guildId],
+        idHints: ["1109352099797549146"],
       }
     );
   }
 
   public override async chatInputRun(
-    interaction: Command.ChatInputInteraction
+    interaction: Command.ChatInputCommandInteraction
   ) {
-    const checkingEmbed = new MessageEmbed()
+    const checkingEmbed = new EmbedBuilder()
       .setColor(colours.primary)
       .setAuthor({
         name: "When life gives you lemons...",
@@ -41,22 +40,17 @@ export class PingCommand extends Command {
           `**Websocket heartbeat:** ${interaction.client.ws.ping}ms`,
           "**Roundtrip latency:** Checking...",
         ].join("\n")
-      )
-      .setFooter({
-        text: "If Octo is slow at responding to other commands, the API might be slow.",
-      });
+      );
 
     const sent = await interaction.reply({
       embeds: [checkingEmbed],
       fetchReply: true,
     });
-    if (!(sent instanceof Message))
-      throw new Error("Did not receive a Message.");
 
     const roundtripLatency =
       sent.createdTimestamp - interaction.createdTimestamp;
 
-    const successEmbed = new MessageEmbed()
+    const successEmbed = new EmbedBuilder()
       .setColor(colours.primary)
       .setAuthor({
         name:
@@ -70,10 +64,7 @@ export class PingCommand extends Command {
           `**Websocket heartbeat:** ${interaction.client.ws.ping}ms`,
           `**Roundtrip latency:** ${roundtripLatency}ms`,
         ].join("\n")
-      )
-      .setFooter({
-        text: "If Octo is slow at responding to other commands, the API might be slow.",
-      });
+      );
 
     return interaction.editReply({ embeds: [successEmbed] });
   }

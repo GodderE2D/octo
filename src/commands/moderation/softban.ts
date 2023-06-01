@@ -3,14 +3,15 @@ import { env, logger, prisma } from "../../index.js";
 import { EmbedBuilder } from "discord.js";
 import colours from "../../constants/colours.js";
 import emojis from "../../constants/emojis.js";
+import { isGuildMember } from "@sapphire/discord.js-utilities";
 import parse from "parse-duration";
 
 export class PingCommand extends Command {
   public constructor(context: Command.Context, options: Command.Options) {
     super(context, {
       ...options,
-      name: "ban",
-      description: "Bans a member from the server.",
+      name: "softban",
+      description: "Softbans a member from the server.",
       requiredUserPermissions: ["BanMembers"],
     });
   }
@@ -28,24 +29,24 @@ export class PingCommand extends Command {
           .addUserOption((option) =>
             option
               .setName("user")
-              .setDescription("The user to ban")
+              .setDescription("The user to softban")
               .setRequired(true)
           )
           .addStringOption((option) =>
             option
               .setName("reason")
-              .setDescription("The reason for the ban")
+              .setDescription("The reason for the softban")
               .setRequired(true)
           )
           .addStringOption((option) =>
             option
               .setName("duration")
               .setDescription(
-                "The duration for the ban (e.g. 1d12h; default: 1y)"
+                "The duration for the message deletion history (default: 1d)"
               )
           ),
       {
-        idHints: ["1109370659093626881"],
+        idHints: ["1109739717773250560"],
       }
     );
   }
@@ -53,18 +54,18 @@ export class PingCommand extends Command {
   public override async chatInputRun(
     interaction: Command.ChatInputCommandInteraction
   ) {
-    const target = interaction.options.getUser("user", true);
+    const target = interaction.options.getMember("user");
     const reason = interaction.options.getString("reason", true);
     const rawDuration = interaction.options.getString("duration");
     const duration = rawDuration
       ? (parse(rawDuration) as number | null)
-      : Infinity;
+      : 8.64e7; // 1 day
 
     await interaction.deferReply({ ephemeral: true });
 
-    if ((await interaction.guild?.bans.fetch())?.has(target.id)) {
+    if (!isGuildMember(target)) {
       return interaction.editReply({
-        content: `${emojis.error} The user is already banned.`,
+        content: `${emojis.error} The user to softban must be in the server.`,
       });
     }
 
@@ -74,15 +75,21 @@ export class PingCommand extends Command {
       });
     }
 
+    if (duration > 6.048e8 /* 7 days */) {
+      return interaction.editReply({
+        content: `${emojis.error} The maximum duration is 7 days.`,
+      });
+    }
+
     if (target.id === interaction.user.id) {
       return interaction.editReply({
-        content: `${emojis.error} You cannot ban yourself.`,
+        content: `${emojis.error} You cannot softban yourself.`,
       });
     }
 
     if (target.id === interaction.client.id) {
       return interaction.editReply({
-        content: `${emojis.error} You cannot ban lemons!`,
+        content: `${emojis.error} You cannot softban lemons!`,
       });
     }
 
@@ -100,9 +107,7 @@ export class PingCommand extends Command {
       data: {
         dmSent: false,
         reason,
-        type: "Ban",
-        processed: false,
-        duration: duration === Infinity ? -1 : duration,
+        type: "Softban",
         member: {
           connectOrCreate: {
             where: {
@@ -131,23 +136,12 @@ export class PingCommand extends Command {
         name: "Blue Shark River Moderation",
         iconURL: "https://i.imgur.com/20HqH6v.png",
       })
-      .setTitle("You have been banned from Blue Shark River.")
+      .setTitle("You have been softbanned from Blue Shark River.")
       .setDescription(
         [
-          `Our moderators have determined that you have violated our server rules. ${
-            duration === Infinity
-              ? "Unfortunately, this ban is permanent but can be appealed. See more information on appeals below."
-              : "Please ensure to read our server rules if you wish to rejoin or appeal your ban."
-          } You cannot join the server while this ban is active.`,
+          `Our moderators have determined that you have violated our server rules. Please ensure to read our server rules if you wish to rejoin or appeal your softban. A softban is like a kick, you can immediately re-join the server.`,
           "",
           `${emojis.channel} **Case Number**: #${modCase.number}`,
-          `${emojis.clock} **Expires**: ${
-            duration === Infinity
-              ? "Permanent"
-              : `<t:${Math.floor(
-                  (Date.now() + duration) / 1000
-                )}:F> (<t:${Math.floor((Date.now() + duration) / 1000)}:R>)`
-          }`,
           `${emojis.stageModerator} **Moderator**: <@${interaction.user.id}> (\`${interaction.user.tag}\`)`,
         ].join("\n")
       )
@@ -158,7 +152,7 @@ export class PingCommand extends Command {
         },
         {
           name: `${emojis.hammer} Appeal`,
-          value: `If you believe this ban was unjustified or otherwise wish to appeal your ban, please DM <@972742287291449365> with your Case Number #${modCase.number}. You can send a friend request if you are unable to DM, or email goddere2d@modslides.com.`,
+          value: `If you believe this softban was unjustified or otherwise wish to appeal your softban, please DM <@972742287291449365> with your Case Number #${modCase.number}. You can send a friend request if you are unable to DM, or email goddere2d@modslides.com.`,
         }
       )
       .setColor(colours.error)
@@ -170,7 +164,7 @@ export class PingCommand extends Command {
     const dmMessage = await target
       .send({
         content:
-          "You have been banned from Blue Shark River.\nThis message contains an embed.\nInvite link: https://discord.gg/R2FDvcPXTK",
+          "You have been softbanned from Blue Shark River.\nThis message contains an embed.\nInvite link: https://discord.gg/R2FDvcPXTK",
         embeds: [dmEmbed],
       })
       .catch(() => undefined);
@@ -187,23 +181,30 @@ export class PingCommand extends Command {
     }
 
     await interaction.guild?.members.ban(target.id, {
-      deleteMessageSeconds: 604_800, // 7 days
-      reason: `Case #${modCase.number} • On behalf of ${
+      deleteMessageSeconds: Math.floor(duration / 1000),
+      reason: `Case #${modCase.number} • Softban • On behalf of ${
         interaction.user.tag
-      } (${interaction.user.id}) • Duration: ${
-        rawDuration ?? "Permanent"
+      } (${interaction.user.id}) • Delete Message History: ${
+        rawDuration ?? "1d"
       } • Reason: ${reason}`,
     });
 
+    await interaction.guild?.members.unban(
+      target.id,
+      `Case #${modCase.number} • Softban • On behalf of ${
+        interaction.user.tag
+      } (${interaction.user.id}) • Delete Message History: ${
+        rawDuration ?? "1d"
+      } • Reason: ${reason}`
+    );
+
     const responseEmbed = new EmbedBuilder()
       .setDescription(
-        `${emojis.success} Banned <@${target.id}> (\`${target.id}\`) ${
-          duration === Infinity
-            ? "indefinitely"
-            : `which expires <t:${Math.floor(
-                (Date.now() + duration) / 1000
-              )}:R>`
-        }.`
+        `${emojis.success} Softbanned <@${target.id}> (\`${
+          target.id
+        }\`) with messages deleted from <t:${Math.floor(
+          (Date.now() - duration) / 1000
+        )}:R>.`
       )
       .setColor(colours.success)
       .setFooter({ text: `Case #${modCase.number}` });
@@ -219,16 +220,12 @@ export class PingCommand extends Command {
       })
       .setDescription(
         [
-          `${emojis.person} **Member**: <@${target.id}> (\`${target.tag}\`)`,
-          `${emojis.hammer} **Action**: Ban (${
-            duration === Infinity
-              ? "permanent"
-              : `expires <t:${Math.floor((Date.now() + duration) / 1000)}:R>`
-          })`,
+          `${emojis.person} **Member**: <@${target.id}> (\`${target.user.tag}\`)`,
+          `${emojis.hammer} **Action**: Softban (${rawDuration})`,
           `${emojis.edit} **Reason**: ${reason}`,
         ].join("\n")
       )
-      .setColor(colours.error)
+      .setColor(colours.warning)
       .setFooter({
         text: `Case #${modCase.number} • ${
           modCase.dmSent ? "DM sent" : "DM not sent"

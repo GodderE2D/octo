@@ -1,17 +1,17 @@
-import { ChatInputCommandErrorPayload, Listener } from "@sapphire/framework";
 import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  EmbedBuilder,
   GuildMember,
   GuildMemberRoleManager,
   Message,
-  MessageActionRow,
-  MessageButton,
-  MessageEmbed,
 } from "discord.js";
-import { channels, logger, roles } from "../index.js";
-import CommandError from "../utils/commandError.js";
+import { ChatInputCommandErrorPayload, Listener } from "@sapphire/framework";
+import CommandError from "../utils/CommandError.js";
 import colours from "../constants/colours.js";
 import emojis from "../constants/emojis.js";
 import { inspect } from "node:util";
+import { logger } from "../index.js";
 
 export class ChatInputCommandErrorListener extends Listener {
   public constructor(context: Listener.Context, options: Listener.Options) {
@@ -25,7 +25,6 @@ export class ChatInputCommandErrorListener extends Listener {
     rawError: Error,
     { command, duration, interaction }: ChatInputCommandErrorPayload
   ) {
-    logger.debug(rawError);
     let error: CommandError;
     if (!(rawError instanceof CommandError)) {
       if (!(rawError.cause instanceof Error)) rawError.cause = undefined;
@@ -36,41 +35,35 @@ export class ChatInputCommandErrorListener extends Listener {
       error = rawError;
     }
 
-    logger.debug("Error:", error);
-    logger.debug(`command: ${command}`);
-    logger.debug(`duration: ${duration}`);
-    logger.debug(`interaction: ${interaction}`);
-    logger.debug("error:", JSON.stringify(error, null, 2));
-    logger.debug("rawError:", JSON.stringify(rawError, null, 2));
-
-    if (!channels) {
-      throw new Error("Cannot find process channels.");
-    }
+    // logger.debug("Error:", error);
+    // logger.debug(`command: ${command}`);
+    // logger.debug(`duration: ${duration}`);
+    // logger.debug(`interaction: ${interaction}`);
+    // logger.debug("error:", JSON.stringify(error, null, 2));
+    // logger.debug("rawError:", JSON.stringify(rawError, null, 2));
 
     let reply: Message<boolean> | undefined;
 
     if (interaction.replied) {
       const fetchedReply = await interaction.fetchReply();
-      if (!(fetchedReply instanceof Message)) {
-        throw new Error("Reply is not a Message.");
-      }
-
       reply = fetchedReply;
     }
-
-    const rawErrorWithTrace = inspect(error);
 
     if (!(interaction.member instanceof GuildMember)) {
       throw new Error("Member is not a GuildMember.");
     }
 
-    const logEmbed = new MessageEmbed()
+    const logEmbed = new EmbedBuilder()
       .setColor(colours.error)
       .setAuthor({
         name: interaction.user.tag,
-        iconURL: interaction.member.displayAvatarURL(),
+        iconURL: interaction.member.displayAvatarURL({ forceStatic: true }),
       })
-      .setDescription(`${error.message}`)
+      .setDescription(
+        rawError.toString().length > 4075 // 4096-21=4075, 21 is the length of text without rawError.toString()
+          ? `\`\`\`js\n${rawError.toString().slice(0, 4075)}\`\`\`and more...`
+          : `\`\`\`js\n${rawError.toString()}\`\`\``
+      )
       .addFields(
         {
           name: "Command",
@@ -87,37 +80,25 @@ export class ChatInputCommandErrorListener extends Listener {
             ? `[Message](${reply.url}) in ${interaction.channel}`
             : `${interaction.channel} (no/ephemeral reply)`,
           inline: true,
-        },
-        {
-          name: "Raw Error",
-          value:
-            rawErrorWithTrace.length > 1004 // 1024-21=1004, 21 is the length of text without rawErrorWithTrace
-              ? `\`\`\`js\n${rawErrorWithTrace.slice(0, 1004)}\`\`\`and more...`
-              : `\`\`\`js\n${rawErrorWithTrace}\`\`\``,
         }
-      );
+      )
+      .setFooter({ text: "Uncaught bot error" });
 
     const internalChannel = await interaction.guild?.channels.fetch(
-      channels.outerSpace.channels.internal
+      "1005478158692270080"
     );
 
-    if (!internalChannel?.isText()) {
+    if (!internalChannel?.isTextBased()) {
       throw new Error(
         "Fetched channel is not a text channel or is undefined/null."
       );
     }
 
-    const logMessage = await internalChannel.send({ embeds: [logEmbed] });
+    await internalChannel.send({ embeds: [logEmbed] });
 
-    const replyEmbed = new MessageEmbed()
-      .setColor(colours.error)
-      .setAuthor({
-        name: "An error occurred",
-        iconURL: "https://i.imgur.com/zhyyTgU.png",
-      })
-      .setFooter({
-        text: "If you think this is in error, please DM an Admin.",
-      });
+    const replyEmbed = new EmbedBuilder().setColor(colours.error).setFooter({
+      text: "If you think this is in error, please contact a staff member.",
+    });
 
     if (error.show) {
       replyEmbed.setDescription(`${emojis.error} ${error.message}`);
@@ -127,27 +108,9 @@ export class ChatInputCommandErrorListener extends Listener {
       );
     }
 
-    const replyActionRow = new MessageActionRow().addComponents(
-      new MessageButton()
-        .setStyle("LINK")
-        .setLabel("View Log")
-        .setURL(logMessage.url)
-    );
-
-    if (!(interaction.member?.roles instanceof GuildMemberRoleManager)) {
-      throw new Error("Roles are not a GuildMemberRoleManager.");
-    }
-
-    if (!roles) {
-      throw new Error("Cannot find process roles.");
-    }
-
     if (!interaction.replied) {
       interaction.reply({
         embeds: [replyEmbed],
-        components: interaction.member.roles.cache.has(roles.admin)
-          ? [replyActionRow]
-          : [],
         ephemeral: error.ephemeral,
       });
     } else {
@@ -156,9 +119,6 @@ export class ChatInputCommandErrorListener extends Listener {
 
       interaction.editReply({
         embeds: [replyEmbed],
-        components: interaction.member.roles.cache.has(roles.admin)
-          ? [replyActionRow]
-          : [],
       });
     }
   }
