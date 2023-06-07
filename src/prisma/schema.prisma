@@ -52,15 +52,16 @@ enum CaseType {
 }
 
 model MinecraftPlayer {
-  uuid                 String   @id
-  discord              Member?  @relation("minecraftPlayer", fields: [discordId], references: [userId])
-  discordId            String?  @map("discord_id")
-  createdAt            DateTime @default(now()) @map("created_at")
-  mainAccount          Boolean  @default(true) @map("main_account")
-  member               Boolean  @default(false)
-  verified             Boolean? @default(false)
-  verificationCode     Int?     @map("verification_code")
-  applicationChannelId String?  @map("application_channel_id")
+  uuid                 String    @id
+  discord              Member?   @relation("minecraftPlayer", fields: [discordId], references: [userId])
+  discordId            String?   @map("discord_id")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  mainAccount          Boolean   @default(true) @map("main_account")
+  member               Boolean   @default(false)
+  supporterSince       DateTime? @map("supporter_since")
+  verified             Boolean?  @default(false)
+  verificationCode     Int?      @map("verification_code")
+  applicationChannelId String?   @map("application_channel_id")
 }
 
 model QueuedCommand {
