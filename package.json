@@ -42,7 +42,7 @@
     "@sapphire/framework": "^4.4.3",
     "@sapphire/plugin-subcommands": "^4.0.1",
     "@sapphire/utilities": "^3.11.2",
-    "axios": "^1.4.0",
+    "axios": "^1.6.0",
     "chalk": "^5.2.0",
     "dayjs": "^1.11.7",
     "discord.js": "^14.13.0",
