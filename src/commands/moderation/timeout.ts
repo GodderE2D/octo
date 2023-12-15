@@ -16,9 +16,7 @@ export class PingCommand extends Command {
     });
   }
 
-  public override registerApplicationCommands(
-    registry: ChatInputCommand.Registry
-  ) {
+  public override registerApplicationCommands(registry: ChatInputCommand.Registry) {
     registry.registerChatInputCommand(
       (builder) =>
         builder //
@@ -26,24 +24,14 @@ export class PingCommand extends Command {
           .setDescription(this.description)
           .setDMPermission(false)
           .setDefaultMemberPermissions("0")
-          .addUserOption((option) =>
-            option
-              .setName("user")
-              .setDescription("The user to timeout")
-              .setRequired(true)
-          )
+          .addUserOption((option) => option.setName("user").setDescription("The user to timeout").setRequired(true))
           .addStringOption((option) =>
-            option
-              .setName("reason")
-              .setDescription("The reason for the timeout")
-              .setRequired(true)
+            option.setName("reason").setDescription("The reason for the timeout").setRequired(true)
           )
           .addStringOption((option) =>
             option
               .setName("duration")
-              .setDescription(
-                "The duration for the timeout (e.g. 1d12h; default: 2h; max: 28d)"
-              )
+              .setDescription("The duration for the timeout (e.g. 1d12h; default: 2h; max: 28d)")
           ),
       {
         idHints: ["1109621125761208323"],
@@ -51,15 +39,11 @@ export class PingCommand extends Command {
     );
   }
 
-  public override async chatInputRun(
-    interaction: Command.ChatInputCommandInteraction
-  ) {
+  public override async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
     const target = interaction.options.getMember("user");
     const reason = interaction.options.getString("reason", true);
     const rawDuration = interaction.options.getString("duration");
-    const duration = rawDuration
-      ? (parse(rawDuration) as number | null)
-      : 7.2e6; // 2 hours
+    const duration = rawDuration ? (parse(rawDuration) as number | null) : 7.2e6; // 2 hours
 
     await interaction.deferReply({ ephemeral: true });
 
@@ -146,9 +130,9 @@ export class PingCommand extends Command {
           `Our moderators have determined that you have violated our server rules. Please ensure to read our server rules when you decide to come back or when appealing your timeout. You cannot interact with the server while this timeout is active.`,
           "",
           `${emojis.channel} **Case Number**: #${modCase.number}`,
-          `${emojis.clock} **Expires**: <t:${Math.floor(
+          `${emojis.clock} **Expires**: <t:${Math.floor((Date.now() + duration) / 1000)}:F> (<t:${Math.floor(
             (Date.now() + duration) / 1000
-          )}:F> (<t:${Math.floor((Date.now() + duration) / 1000)}:R>)`,
+          )}:R>)`,
           `${emojis.stageModerator} **Moderator**: <@${interaction.user.id}> (\`${interaction.user.tag}\`)`,
         ].join("\n")
       )
@@ -159,7 +143,7 @@ export class PingCommand extends Command {
         },
         {
           name: `${emojis.hammer} Appeal`,
-          value: `If you believe this timeout was unjustified or otherwise wish to appeal your timeout, please DM <@972742287291449365> with your Case Number #${modCase.number}. You can send a friend request if you are unable to DM, or email goddere2d@modslides.com.`,
+          value: `If you believe this timeout was unjustified or otherwise wish to appeal your timeout, please DM <@972742287291449365> with your Case Number #${modCase.number}. You can send a friend request if you are unable to DM, or email goddere2d@bsr.gg.`,
         }
       )
       .setColor(colours.error)
@@ -189,16 +173,16 @@ export class PingCommand extends Command {
 
     await target.timeout(
       duration,
-      `Case #${modCase.number} • On behalf of ${interaction.user.tag} (${
-        interaction.user.id
-      }) • Duration: ${rawDuration ?? "2h"} • Reason: ${reason}`
+      `Case #${modCase.number} • On behalf of ${interaction.user.tag} (${interaction.user.id}) • Duration: ${
+        rawDuration ?? "2h"
+      } • Reason: ${reason}`
     );
 
     const responseEmbed = new EmbedBuilder()
       .setDescription(
-        `${emojis.success} Timed out <@${target.id}> (\`${
-          target.id
-        }\`) which expires <t:${Math.floor((Date.now() + duration) / 1000)}:R>.`
+        `${emojis.success} Timed out <@${target.id}> (\`${target.id}\`) which expires <t:${Math.floor(
+          (Date.now() + duration) / 1000
+        )}:R>.`
       )
       .setColor(colours.success)
       .setFooter({ text: `Case #${modCase.number}` });
@@ -215,23 +199,17 @@ export class PingCommand extends Command {
       .setDescription(
         [
           `${emojis.person} **Member**: <@${target.id}> (\`${target.user.tag}\`)`,
-          `${emojis.hammer} **Action**: Timeout (expires <t:${Math.floor(
-            (Date.now() + duration) / 1000
-          )}:R>)`,
+          `${emojis.hammer} **Action**: Timeout (expires <t:${Math.floor((Date.now() + duration) / 1000)}:R>)`,
           `${emojis.edit} **Reason**: ${reason}`,
         ].join("\n")
       )
       .setColor(colours.orange)
       .setFooter({
-        text: `Case #${modCase.number} • ${
-          modCase.dmSent ? "DM sent" : "DM not sent"
-        }`,
+        text: `Case #${modCase.number} • ${modCase.dmSent ? "DM sent" : "DM not sent"}`,
       })
       .setTimestamp();
 
-    const logChannel = await interaction.guild?.channels.fetch(
-      env.MOD_LOGS_CHANNEL_ID
-    );
+    const logChannel = await interaction.guild?.channels.fetch(env.MOD_LOGS_CHANNEL_ID);
 
     if (logChannel?.isTextBased()) {
       const logMessage = await logChannel.send({

@@ -15,9 +15,7 @@ export class PingCommand extends Command {
     });
   }
 
-  public override registerApplicationCommands(
-    registry: ChatInputCommand.Registry
-  ) {
+  public override registerApplicationCommands(registry: ChatInputCommand.Registry) {
     registry.registerChatInputCommand(
       (builder) =>
         builder //
@@ -25,17 +23,9 @@ export class PingCommand extends Command {
           .setDescription(this.description)
           .setDMPermission(false)
           .setDefaultMemberPermissions("0")
-          .addUserOption((option) =>
-            option
-              .setName("warn")
-              .setDescription("The user to warn")
-              .setRequired(true)
-          )
+          .addUserOption((option) => option.setName("warn").setDescription("The user to warn").setRequired(true))
           .addStringOption((option) =>
-            option
-              .setName("reason")
-              .setDescription("The reason for the warn")
-              .setRequired(true)
+            option.setName("reason").setDescription("The reason for the warn").setRequired(true)
           ),
       {
         idHints: ["1113623814958481408"],
@@ -43,9 +33,7 @@ export class PingCommand extends Command {
     );
   }
 
-  public override async chatInputRun(
-    interaction: Command.ChatInputCommandInteraction
-  ) {
+  public override async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
     const target = interaction.options.getMember("user");
     const reason = interaction.options.getString("reason", true);
 
@@ -69,9 +57,7 @@ export class PingCommand extends Command {
       });
     }
 
-    const member = await interaction.guild?.members
-      .fetch(target.id)
-      .catch(() => undefined);
+    const member = await interaction.guild?.members.fetch(target.id).catch(() => undefined);
 
     if (!member) {
       throw new Error("Failed to fetch member.");
@@ -126,7 +112,7 @@ export class PingCommand extends Command {
         },
         {
           name: `${emojis.hammer} Appeal`,
-          value: `If you believe this kick was unjustified or otherwise wish to appeal your warn, please DM <@972742287291449365> with your Case Number #${modCase.number}. You can send a friend request if you are unable to DM, or email goddere2d@modslides.com.`,
+          value: `If you believe this kick was unjustified or otherwise wish to appeal your warn, please DM <@972742287291449365> with your Case Number #${modCase.number}. You can send a friend request if you are unable to DM, or email goddere2d@bsr.gg.`,
         }
       )
       .setColor(colours.error)
@@ -155,9 +141,7 @@ export class PingCommand extends Command {
     }
 
     const responseEmbed = new EmbedBuilder()
-      .setDescription(
-        `${emojis.success} Warned <@${target.id}> (\`${target.id}\`).`
-      )
+      .setDescription(`${emojis.success} Warned <@${target.id}> (\`${target.id}\`).`)
       .setColor(colours.success)
       .setFooter({ text: `Case #${modCase.number}` });
 
@@ -179,15 +163,11 @@ export class PingCommand extends Command {
       )
       .setColor(colours.brown)
       .setFooter({
-        text: `Case #${modCase.number} • ${
-          modCase.dmSent ? "DM sent" : "DM not sent"
-        }`,
+        text: `Case #${modCase.number} • ${modCase.dmSent ? "DM sent" : "DM not sent"}`,
       })
       .setTimestamp();
 
-    const logChannel = await interaction.guild?.channels.fetch(
-      env.MOD_LOGS_CHANNEL_ID
-    );
+    const logChannel = await interaction.guild?.channels.fetch(env.MOD_LOGS_CHANNEL_ID);
 
     if (logChannel?.isTextBased()) {
       const logMessage = await logChannel.send({
@@ -203,9 +183,7 @@ export class PingCommand extends Command {
         },
       });
     } else {
-      return logger.warn(
-        `Mod logs channel does not exist in this guild (${interaction.guildId}).`
-      );
+      return logger.warn(`Mod logs channel does not exist in this guild (${interaction.guildId}).`);
     }
   }
 }

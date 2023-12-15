@@ -15,9 +15,7 @@ export class PingCommand extends Command {
     });
   }
 
-  public override registerApplicationCommands(
-    registry: ChatInputCommand.Registry
-  ) {
+  public override registerApplicationCommands(registry: ChatInputCommand.Registry) {
     registry.registerChatInputCommand(
       (builder) =>
         builder //
@@ -25,24 +23,12 @@ export class PingCommand extends Command {
           .setDescription(this.description)
           .setDMPermission(false)
           .setDefaultMemberPermissions("0")
-          .addUserOption((option) =>
-            option
-              .setName("user")
-              .setDescription("The user to ban")
-              .setRequired(true)
+          .addUserOption((option) => option.setName("user").setDescription("The user to ban").setRequired(true))
+          .addStringOption((option) =>
+            option.setName("reason").setDescription("The reason for the ban").setRequired(true)
           )
           .addStringOption((option) =>
-            option
-              .setName("reason")
-              .setDescription("The reason for the ban")
-              .setRequired(true)
-          )
-          .addStringOption((option) =>
-            option
-              .setName("duration")
-              .setDescription(
-                "The duration for the ban (e.g. 1d12h; default: 1y)"
-              )
+            option.setName("duration").setDescription("The duration for the ban (e.g. 1d12h; default: 1y)")
           ),
       {
         idHints: ["1109370659093626881"],
@@ -50,15 +36,11 @@ export class PingCommand extends Command {
     );
   }
 
-  public override async chatInputRun(
-    interaction: Command.ChatInputCommandInteraction
-  ) {
+  public override async chatInputRun(interaction: Command.ChatInputCommandInteraction) {
     const target = interaction.options.getUser("user", true);
     const reason = interaction.options.getString("reason", true);
     const rawDuration = interaction.options.getString("duration");
-    const duration = rawDuration
-      ? (parse(rawDuration) as number | null)
-      : Infinity;
+    const duration = rawDuration ? (parse(rawDuration) as number | null) : Infinity;
 
     await interaction.deferReply({ ephemeral: true });
 
@@ -86,9 +68,7 @@ export class PingCommand extends Command {
       });
     }
 
-    const member = await interaction.guild?.members
-      .fetch(target.id)
-      .catch(() => undefined);
+    const member = await interaction.guild?.members.fetch(target.id).catch(() => undefined);
 
     if (member && !member.bannable) {
       return interaction.editReply({
@@ -144,9 +124,9 @@ export class PingCommand extends Command {
           `${emojis.clock} **Expires**: ${
             duration === Infinity
               ? "Permanent"
-              : `<t:${Math.floor(
+              : `<t:${Math.floor((Date.now() + duration) / 1000)}:F> (<t:${Math.floor(
                   (Date.now() + duration) / 1000
-                )}:F> (<t:${Math.floor((Date.now() + duration) / 1000)}:R>)`
+                )}:R>)`
           }`,
           `${emojis.stageModerator} **Moderator**: <@${interaction.user.id}> (\`${interaction.user.tag}\`)`,
         ].join("\n")
@@ -158,7 +138,7 @@ export class PingCommand extends Command {
         },
         {
           name: `${emojis.hammer} Appeal`,
-          value: `If you believe this ban was unjustified or otherwise wish to appeal your ban, please DM <@972742287291449365> with your Case Number #${modCase.number}. You can send a friend request if you are unable to DM, or email goddere2d@modslides.com.`,
+          value: `If you believe this ban was unjustified or otherwise wish to appeal your ban, please DM <@972742287291449365> with your Case Number #${modCase.number}. You can send a friend request if you are unable to DM, or email goddere2d@bsr.gg.`,
         }
       )
       .setColor(colours.error)
@@ -188,9 +168,7 @@ export class PingCommand extends Command {
 
     await interaction.guild?.members.ban(target.id, {
       deleteMessageSeconds: 604_800, // 7 days
-      reason: `Case #${modCase.number} • On behalf of ${
-        interaction.user.tag
-      } (${interaction.user.id}) • Duration: ${
+      reason: `Case #${modCase.number} • On behalf of ${interaction.user.tag} (${interaction.user.id}) • Duration: ${
         rawDuration ?? "Permanent"
       } • Reason: ${reason}`,
     });
@@ -198,11 +176,7 @@ export class PingCommand extends Command {
     const responseEmbed = new EmbedBuilder()
       .setDescription(
         `${emojis.success} Banned <@${target.id}> (\`${target.id}\`) ${
-          duration === Infinity
-            ? "indefinitely"
-            : `which expires <t:${Math.floor(
-                (Date.now() + duration) / 1000
-              )}:R>`
+          duration === Infinity ? "indefinitely" : `which expires <t:${Math.floor((Date.now() + duration) / 1000)}:R>`
         }.`
       )
       .setColor(colours.success)
@@ -221,24 +195,18 @@ export class PingCommand extends Command {
         [
           `${emojis.person} **Member**: <@${target.id}> (\`${target.tag}\`)`,
           `${emojis.hammer} **Action**: Ban (${
-            duration === Infinity
-              ? "permanent"
-              : `expires <t:${Math.floor((Date.now() + duration) / 1000)}:R>`
+            duration === Infinity ? "permanent" : `expires <t:${Math.floor((Date.now() + duration) / 1000)}:R>`
           })`,
           `${emojis.edit} **Reason**: ${reason}`,
         ].join("\n")
       )
       .setColor(colours.error)
       .setFooter({
-        text: `Case #${modCase.number} • ${
-          modCase.dmSent ? "DM sent" : "DM not sent"
-        }`,
+        text: `Case #${modCase.number} • ${modCase.dmSent ? "DM sent" : "DM not sent"}`,
       })
       .setTimestamp();
 
-    const logChannel = await interaction.guild?.channels.fetch(
-      env.MOD_LOGS_CHANNEL_ID
-    );
+    const logChannel = await interaction.guild?.channels.fetch(env.MOD_LOGS_CHANNEL_ID);
 
     if (logChannel?.isTextBased()) {
       const logMessage = await logChannel.send({
@@ -254,9 +222,7 @@ export class PingCommand extends Command {
         },
       });
     } else {
-      return logger.warn(
-        `Mod logs channel does not exist in this guild (${interaction.guildId}).`
-      );
+      return logger.warn(`Mod logs channel does not exist in this guild (${interaction.guildId}).`);
     }
   }
 }
